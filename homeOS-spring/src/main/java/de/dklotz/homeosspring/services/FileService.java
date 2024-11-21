@@ -41,22 +41,7 @@ public class FileService extends FileRPCGrpc.FileRPCImplBase {
     @Override
     public void get(FileRequest request, StreamObserver<de.dklotz.homeosspring.File> responseObserver) {
         var file = fileRepository.findById(request.getId());
-        file.ifPresent(value -> {
-            var fileBuilder = de.dklotz.homeosspring.File.newBuilder()
-                    .setId(value.getId())
-                    .setName(value.getName())
-                    .setFavorite(value.isFavorite())
-                    .setMime(value.getMimeType().getType())
-                    .setIsVideo(value.getMimeType().isVideo());
-
-            Map<String, List<MetaInfoValue>> metaInfosAsMap = mapOfMetaInfos(value);
-
-            for (var metaEntry : metaInfosAsMap.entrySet()) {
-                fileBuilder.addMetaInfos(MetaInfoMap.newBuilder().setKey(metaEntry.getKey()).addAllValue(metaEntry.getValue()).build());
-            }
-
-            responseObserver.onNext(fileBuilder.build());
-        });
+        file.ifPresent(value -> responseObserver.onNext(fileEntityToRpcFile(value)));
         responseObserver.onCompleted();
     }
 
@@ -76,22 +61,8 @@ public class FileService extends FileRPCGrpc.FileRPCImplBase {
 
     @Override
     public void all(Empty request, StreamObserver<de.dklotz.homeosspring.File> responseObserver) {
-        fileRepository.findAll().forEach(file -> {
-            var metaInfosAsMap = mapOfMetaInfos(file);
-
-            var metaInfos = metaInfosAsMap.entrySet().stream().map(stringListEntry -> MetaInfoMap.newBuilder()
-                    .setKey(stringListEntry.getKey())
-                    .addAllValue(stringListEntry.getValue())
-                    .build()).toList();
-
-            responseObserver.onNext(de.dklotz.homeosspring.File.newBuilder()
-                    .setName(file.getName())
-                    .setFavorite(file.isFavorite())
-                    .setId(file.getId())
-                    .setMime(file.getMimeType().getType())
-                    .setIsVideo(file.getMimeType().isVideo())
-                    .addAllMetaInfos(metaInfos)
-                    .build());
+        fileRepository.findAll().reversed().forEach(file -> {
+            responseObserver.onNext(fileEntityToRpcFile(file));
         });
         responseObserver.onCompleted();
     }
@@ -125,14 +96,7 @@ public class FileService extends FileRPCGrpc.FileRPCImplBase {
             var extension = file.getName().substring(file.getName().lastIndexOf(".") + 1);
             try (FileInputStream inStream = new FileInputStream(file)) {
                 var saved = storeFile(extension, i, inStream);
-                responseObserver.onNext(de.dklotz.homeosspring.File.newBuilder()
-                        .setId(saved.getId())
-                        .setName(saved.getName())
-                        .setFavorite(saved.isFavorite())
-                        .setMime(saved.getMimeType().getType())
-                        .setIsVideo(saved.getMimeType().isVideo())
-                        .addAllMetaInfos(Collections.emptyList())
-                        .build());
+                responseObserver.onNext(fileEntityToRpcFile(saved));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             } finally {
@@ -205,28 +169,28 @@ public class FileService extends FileRPCGrpc.FileRPCImplBase {
         executor.createJob(builder).run();
     }
 
-
     @Override
-    public void addMetaInfo(MetaInfoToFile request, StreamObserver<DefaultResponse> responseObserver) {
+    public void addMetaInfo(MetaInfoToFile request, StreamObserver<de.dklotz.homeosspring.File> responseObserver) {
         var oFile = fileRepository.findById(request.getFileId());
         var metaInfo = metaInfoRepository.findById(request.getMetaInfoId());
 
-        if (oFile.isPresent() && metaInfo.isPresent()) {
-            var file = oFile.get();
-            var metaInfos = file.getMetaInfos();
-            metaInfos.add(metaInfo.get());
-            file.setMetaInfos(metaInfos);
-            fileRepository.save(file);
-            responseObserver.onNext(DefaultResponse.newBuilder().setSuccess(true).build());
-        } else {
-            responseObserver.onNext(DefaultResponse.newBuilder().setSuccess(false).setMessage("invalid file or meta info id").build());
+        try {
+            if (oFile.isPresent() && metaInfo.isPresent()) {
+                var file = oFile.get();
+                var metaInfos = file.getMetaInfos();
+                metaInfos.add(metaInfo.get());
+                file.setMetaInfos(metaInfos);
+                responseObserver.onNext(fileEntityToRpcFile(fileRepository.save(file)));
+            }
+        } catch (Exception e) {
+            responseObserver.onError(e);
         }
 
         responseObserver.onCompleted();
     }
 
     @Override
-    public void removeMetaInfo(MetaInfoToFile request, StreamObserver<DefaultResponse> responseObserver) {
+    public void removeMetaInfo(MetaInfoToFile request, StreamObserver<de.dklotz.homeosspring.File> responseObserver) {
         var oFile = fileRepository.findById(request.getFileId());
         var metaInfo = metaInfoRepository.findById(request.getMetaInfoId());
 
@@ -234,13 +198,27 @@ public class FileService extends FileRPCGrpc.FileRPCImplBase {
             if (oFile.isPresent() && metaInfo.isPresent()) {
                 var file = oFile.get();
                 file.getMetaInfos().remove(metaInfo.get());
-                fileRepository.save(file);
-                responseObserver.onNext(DefaultResponse.newBuilder().setSuccess(true).build());
+                responseObserver.onNext(fileEntityToRpcFile(fileRepository.save(file)));
             }
         } catch (Exception e) {
-            responseObserver.onNext(DefaultResponse.newBuilder().setSuccess(false).setMessage(e.getMessage()).build());
+            responseObserver.onError(e);
         }
 
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void setFavorite(FileRequest request, StreamObserver<de.dklotz.homeosspring.File> responseObserver) {
+        var oFile = fileRepository.findById(request.getId());
+        try {
+            if (oFile.isPresent()) {
+                var file = oFile.get();
+                file.setFavorite(request.getFavorite());
+                responseObserver.onNext(fileEntityToRpcFile(fileRepository.save(file)));
+            }
+        } catch (Exception e) {
+            responseObserver.onError(e);
+        }
         responseObserver.onCompleted();
     }
 
@@ -274,5 +252,22 @@ public class FileService extends FileRPCGrpc.FileRPCImplBase {
 
     private String getThumbnailPath(final MimeType mime) {
         return getPath(mime) + "/thumbnail";
+    }
+
+    private de.dklotz.homeosspring.File fileEntityToRpcFile(final File saved) {
+        var fileBuilder = de.dklotz.homeosspring.File.newBuilder()
+                .setId(saved.getId())
+                .setName(saved.getName())
+                .setFavorite(saved.isFavorite())
+                .setMime(saved.getMimeType().getType())
+                .setIsVideo(saved.getMimeType().isVideo());
+
+        Map<String, List<MetaInfoValue>> metaInfosAsMap = mapOfMetaInfos(saved);
+
+        for (var metaEntry : metaInfosAsMap.entrySet()) {
+            fileBuilder.addMetaInfos(MetaInfoMap.newBuilder().setKey(metaEntry.getKey()).addAllValue(metaEntry.getValue()).build());
+        }
+
+        return fileBuilder.build();
     }
 }

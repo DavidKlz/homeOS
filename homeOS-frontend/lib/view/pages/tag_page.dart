@@ -22,30 +22,32 @@ class _TagPageState extends ConsumerState<TagPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: ref.watch(metaTypeServiceProvider).when(
-            data: (data) {
-              return data
-                  .map(
-                    (e) => TagInput(
-                      type: e.type,
-                      onAddTag: _onAddTag,
-                      onRemoveTag: _onRemoveTag,
-                    ),
-                  )
-                  .toList();
-            },
-            error: (error, stackTrace) => [const Text("Error loading Tags")],
-            loading: () => [
-              const Center(
-                child: SizedBox(
-                  width: 50,
-                  height: 50,
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            ],
-          ),
+    return SingleChildScrollView(
+      child: Column(
+        children: ref.watch(metaTypeServiceProvider).when(
+              data: (data) {
+                return data
+                    .map(
+                      (e) => TagInput(
+                        type: e.type,
+                        onAddTag: _onAddTag,
+                        onRemoveTag: _onRemoveTag,
+                      ),
+                    )
+                    .toList();
+              },
+              error: (error, stackTrace) => [const Text("Error loading Tags")],
+              loading: () => [
+                const Center(
+                  child: SizedBox(
+                    width: 50,
+                    height: 50,
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              ],
+            ),
+      ),
     );
   }
 

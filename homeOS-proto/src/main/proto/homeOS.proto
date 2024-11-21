@@ -42,6 +42,7 @@ message MetaInfoValue {
 
 message FileRequest {
     int64 id = 1;
+    optional bool favorite = 2;
 }
 
 message MetaInfoRequest {
@@ -57,8 +58,9 @@ service FileRPC {
     rpc All(google.protobuf.Empty) returns (stream File) {};
     rpc Delete(FileRequest) returns (DefaultResponse) {};
     rpc Sync(google.protobuf.Empty) returns (stream File) {};
-    rpc AddMetaInfo(MetaInfoToFile) returns (DefaultResponse) {};
-    rpc RemoveMetaInfo(MetaInfoToFile) returns (DefaultResponse) {};
+    rpc AddMetaInfo(MetaInfoToFile) returns (File) {};
+    rpc RemoveMetaInfo(MetaInfoToFile) returns (File) {};
+    rpc SetFavorite(FileRequest) returns (File) {};
 }
 
 service MetaInfoRPC {

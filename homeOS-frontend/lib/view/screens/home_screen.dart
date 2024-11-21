@@ -56,6 +56,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               setState(() => currentIndex = 0);
               break;
             case 1:
+              navigationKey.currentState
+                  ?.pushNamedAndRemoveUntil(Routes.album, (_) => false);
               setState(() => currentIndex = 1);
               break;
             case 2:

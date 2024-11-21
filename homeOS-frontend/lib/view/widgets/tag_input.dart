@@ -35,9 +35,9 @@ class _TagInputState extends ConsumerState<TagInput> {
           controller: controller,
           focusNode: focusNode,
           onSubmitted: _onSubmitted,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            hintText: 'Enter tag',
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            hintText: 'Enter ${widget.type}',
           ),
         ),
         const SizedBox(height: 5),
