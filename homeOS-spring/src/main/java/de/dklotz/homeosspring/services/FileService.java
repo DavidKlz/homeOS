@@ -61,7 +61,7 @@ public class FileService extends FileRPCGrpc.FileRPCImplBase {
 
     @Override
     public void all(Empty request, StreamObserver<de.dklotz.homeosspring.File> responseObserver) {
-        fileRepository.findAll().reversed().forEach(file -> {
+        fileRepository.findAllByOrderByIdDesc().forEach(file -> {
             responseObserver.onNext(fileEntityToRpcFile(file));
         });
         responseObserver.onCompleted();
@@ -192,12 +192,11 @@ public class FileService extends FileRPCGrpc.FileRPCImplBase {
     @Override
     public void removeMetaInfo(MetaInfoToFile request, StreamObserver<de.dklotz.homeosspring.File> responseObserver) {
         var oFile = fileRepository.findById(request.getFileId());
-        var metaInfo = metaInfoRepository.findById(request.getMetaInfoId());
 
         try {
-            if (oFile.isPresent() && metaInfo.isPresent()) {
+            if (oFile.isPresent()) {
                 var file = oFile.get();
-                file.getMetaInfos().remove(metaInfo.get());
+                file.getMetaInfos().removeIf(metaInfo1 -> metaInfo1.getId() == request.getMetaInfoId());
                 responseObserver.onNext(fileEntityToRpcFile(fileRepository.save(file)));
             }
         } catch (Exception e) {

@@ -1,8 +1,5 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:homeos/logic/provider/meta_info_provider.dart';
 
 import '../../config/routes/home_os_router.dart';
 import '../../config/routes/routes.dart';
@@ -33,12 +30,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         actions: [
           if (currentIndex == 0)
             IconButton(
-                onPressed: () => ref.read(fileListServiceProvider.notifier).sync(),
-                icon: const Icon(Icons.sync))
+              onPressed: () =>
+                  ref.read(fileListServiceProvider.notifier).sync(),
+              icon: const Icon(Icons.sync),
+            ),
         ],
       ),
-      floatingActionButton:
-          (currentIndex == 2) ? FloatingActionButton(onPressed: onPress, child: const Icon(Icons.add),) : null,
+      floatingActionButton: (currentIndex == 2)
+          ? FloatingActionButton(
+              onPressed: onPress,
+              child: const Icon(Icons.add),
+            )
+          : null,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
         items: const [
@@ -80,15 +83,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.0)
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("Add Type", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text("Add Type",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8.0),
               SizedBox(
                 width: MediaQuery.of(context).size.width * 0.3,

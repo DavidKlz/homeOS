@@ -34,6 +34,7 @@ class _TagInputState extends ConsumerState<TagInput> {
         TextField(
           controller: controller,
           focusNode: focusNode,
+          onChanged: (value) => setState(() {}),
           onSubmitted: _onSubmitted,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
@@ -68,6 +69,9 @@ class _TagInputState extends ConsumerState<TagInput> {
             var metaInfo =
                 data.where((element) => element.key == widget.type).first;
             return metaInfo.value
+                .where((element) => (controller.text.isNotEmpty)
+                    ? element.value.startsWith(controller.text)
+                    : true)
                 .map(
                   (e) => Chip(
                     label: Text(e.value),

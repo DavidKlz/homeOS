@@ -38,6 +38,16 @@ class FileListService extends _$FileListService {
     state = state.map((e) => e.id == id ? result : e).toList();
   }
 
+  Future<void> addMetaInfo(Int64 fileId, metaInfoId) async {
+    var result = await ref.read(fileServiceClientProvider).addMetaInfo(MetaInfoToFile(fileId: fileId, metaInfoId: metaInfoId));
+    state = state.map((e) => e.id == fileId ? result : e).toList();
+  }
+
+  Future<void> removeMetaInfo(Int64 fileId, metaInfoId) async {
+    var result = await ref.read(fileServiceClientProvider).removeMetaInfo(MetaInfoToFile(fileId: fileId, metaInfoId: metaInfoId));
+    state = state.map((e) => e.id == fileId ? result : e).toList();
+  }
+
   void _readStream(ResponseStream<File> response, bool reverse) async {
     await for (var file in response) {
       if (!state.contains(file)) {

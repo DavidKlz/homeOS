@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../config/constants/homeos_urls.dart';
 import '../../config/routes/routes.dart';
 import '../../logic/provider/file_list_provider.dart';
+import 'package:homeos/generated/homeOS.pb.dart';
 
 class GalleryPage extends ConsumerStatefulWidget {
   const GalleryPage({super.key});
@@ -33,22 +34,8 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
               .watch(fileListServiceProvider)
               .map(
                 (file) => InkWell(
-                  onTap: () async {
-                    final result =
-                        await Navigator.of(context, rootNavigator: true)
-                            .pushNamed(
-                      Routes.detail,
-                      arguments:
-                          ref.read(fileListServiceProvider).indexOf(file),
-                    );
-                    if (result is int) {
-                      var row = (result / countOfImages).floor();
-
-                      // TODO: Check if row already visible
-
-                      controller.jumpTo(row * size);
-                    }
-                  },
+                  onTap: () async => await onItemTapped(
+                      context, file, countOfImages, constraints, size),
                   child: SizedBox(
                     width: size - 5,
                     height: size - 5,
@@ -86,5 +73,32 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
         ),
       );
     });
+  }
+
+  Future<void> onItemTapped(BuildContext context, File file, int countOfImages,
+      BoxConstraints constraints, double size) async {
+    // Navigate to new Page
+    final result = await Navigator.of(context, rootNavigator: true).pushNamed(
+      Routes.detail,
+      arguments: ref.read(fileListServiceProvider).indexOf(file),
+    );
+    // Scroll to last viewed Item from DetailScreen
+    if (result is int) {
+      var row = (result / countOfImages).floor();
+
+      var rows = (ref.read(fileListServiceProvider).length /
+              (countOfImages > 4 ? countOfImages : 4))
+          .ceil();
+      int visibleRows = (constraints.maxHeight / size).ceil();
+      var lastOffset = controller.offset + visibleRows * size;
+      var lastVisiblePosition = rows * (size - 5);
+
+      var rowPosition = row * size;
+
+      if (rowPosition != controller.offset &&
+          lastVisiblePosition > lastOffset) {
+        controller.jumpTo(rowPosition);
+      }
+    }
   }
 }
