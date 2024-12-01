@@ -62,7 +62,24 @@ public class FileService extends FileRPCGrpc.FileRPCImplBase {
     @Override
     public void all(Empty request, StreamObserver<de.dklotz.homeosspring.File> responseObserver) {
         fileRepository.findAllByOrderByIdDesc().forEach(file -> {
-            responseObserver.onNext(fileEntityToRpcFile(file));
+            var mediaFile = new java.io.File(file.getPath());
+            var thumbFile = new java.io.File(file.getThumbPath());
+            if (mediaFile.exists() && thumbFile.exists()) {
+                responseObserver.onNext(fileEntityToRpcFile(file));
+            } else {
+                var allRemoved = true;
+
+                if (thumbFile.exists()) {
+                    allRemoved &= thumbFile.delete();
+                }
+                if (mediaFile.exists()) {
+                    allRemoved &= mediaFile.delete();
+                }
+
+                if (allRemoved) {
+                    fileRepository.deleteById(file.getId());
+                }
+            }
         });
         responseObserver.onCompleted();
     }

@@ -1,5 +1,6 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homeos/view/widgets/file_overlay.dart';
 
@@ -16,12 +17,21 @@ class DetailScreen extends ConsumerStatefulWidget {
 }
 
 class _DetailScreenState extends ConsumerState<DetailScreen> {
+  CarouselSliderController controller = CarouselSliderController();
+
   late int currentIndex;
 
   @override
   void initState() {
     super.initState();
     currentIndex = widget.index;
+    ServicesBinding.instance.keyboard.addHandler(_onKey);
+  }
+
+  @override
+  void dispose() {
+    ServicesBinding.instance.keyboard.removeHandler(_onKey);
+    super.dispose();
   }
 
   @override
@@ -32,6 +42,7 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
         child: Stack(
           children: [
             CarouselSlider(
+              carouselController: controller,
               options: CarouselOptions(
                 initialPage: widget.index,
                 viewportFraction: 1,
@@ -70,5 +81,16 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
 
   void onPop() {
     Navigator.of(context).pop(currentIndex);
+  }
+
+  bool _onKey(KeyEvent event) {
+    if(event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+      controller.previousPage();
+    } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+      controller.nextPage();
+    } else if(event.logicalKey == LogicalKeyboardKey.browserBack || event.logicalKey == LogicalKeyboardKey.goBack) {
+      onPop();
+    }
+    return false;
   }
 }

@@ -5,7 +5,7 @@ enum class MimeType(val type: String, val extensions: List<String>) {
     VIDEO_MP4("video/mp4", listOf("mp4", "m4v")),
     VIDEO_OGG("video/ogg", listOf("ogg", "ogv")),
     VIDEO_QUICKTIME("video/quicktime", listOf("qt", "mov")),
-    VIDEO_WEBM("video/webm", listOf("webm")),
+    VIDEO_WEBM("video/webm", listOf("webm", "mkv")),
     VIDEO_X_MSVIDEO("video/x-msvideo", listOf("avi")),
     VIDEO_X_SGI_MOVIE("video/x-sgi-movie", listOf("movie")),
     IMAGE_BMP("image/bmp", listOf("bmp")),

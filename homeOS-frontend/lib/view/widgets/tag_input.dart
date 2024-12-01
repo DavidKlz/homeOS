@@ -72,6 +72,7 @@ class _TagInputState extends ConsumerState<TagInput> {
                 .where((element) => (controller.text.isNotEmpty)
                     ? element.value.startsWith(controller.text)
                     : true)
+                .take(20)
                 .map(
                   (e) => Chip(
                     label: Text(e.value),
